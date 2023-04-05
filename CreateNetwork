@@ -1,0 +1,22 @@
+# Connect to Azure PowerShell
+Connect-AzAccount
+
+# Create a new virtual network
+$rgName = "rg-vnet-hub"
+$location = "uksouth"
+$vnetName = "vnet1-hub"
+$addressSpace = "10.0.0.0/20"
+$dnsServers = "10.0.0.1", "10.0.0.2"
+
+New-AzResourceGroup -Name $rgName -Location $location
+
+$vnet = New-AzVirtualNetwork `
+  -ResourceGroupName $rgName `
+  -Location $location `
+  -Name $vnetName `
+  -AddressPrefix $addressSpace `
+  -DnsServer $dnsServers
+
+$vnet
+
+#you will need to move into subscription on completion
