@@ -1,0 +1,42 @@
+# Define subscription names
+$subNames = @(
+    "Hub",
+    "Management",
+    "Identity",
+    "Landzone",
+    "AVD"
+)
+
+# Define management group names
+$coreMgName = "Landingzone-mgt-core"
+$prodMgName = "Landingzone-mgt-production"
+
+# Define owner group name
+$ownerGroupName = "TenantAdmins"
+
+# Connect to Azure
+Connect-AzAccount
+
+# Get the tenant ID
+$tenantId = (Get-AzTenant).Id
+
+# Create the management groups if they don't already exist
+$coreMg = New-AzManagementGroup -GroupName $coreMgName -DisplayName $coreMgName -ParentName "/" -Force
+$prodMg = New-AzManagementGroup -GroupName $prodMgName -DisplayName $prodMgName -ParentName "/" -Force
+
+# Loop through each subscription name and create the subscription
+foreach ($subName in $subNames) {
+    $subDisplayName = "$subName Subscription"
+    $subId = "sub-prd-$subName"
+    $ownerGroupId = (Get-AzADGroup -DisplayName $ownerGroupName).Id
+
+    # Create the subscription
+    $subscription = New-AzSubscription -SubscriptionName $subDisplayName -SubscriptionId $subId -TenantId $tenantId -Owner $ownerGroupId
+
+    # Set the subscription's management group
+    if ($subName -in @("Hub", "Management", "Identity")) {
+        Set-AzManagementGroupAssignment -Scope $subscription.Id -GroupId $coreMg.Id
+    } elseif ($subName -eq "Landzone") {
+        Set-AzManagementGroupAssignment -Scope $subscription.Id -GroupId $prodMg.Id
+    }
+}
