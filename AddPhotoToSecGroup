@@ -1,0 +1,36 @@
+# Install required Azure PowerShell module if not already installed
+if (-not (Get-Module -ListAvailable Az.Accounts)) {
+    Install-Module -Name Az.Accounts -Force
+}
+
+# Sign in to your Azure account
+Connect-AzAccount
+
+# Prompt the user for the security group display name
+$groupName = Read-Host "Enter the security group display name"
+
+# Get the security group
+$group = Get-AzADGroup -DisplayName $groupName
+
+if ($group) {
+    # Prompt the user for the path to the new image file
+    $imagePath = Read-Host "Enter the path to the new image file"
+
+    if (Test-Path $imagePath) {
+        # Convert the image file to base64 string
+        $imageBytes = [System.IO.File]::ReadAllBytes($imagePath)
+        $imageBase64 = [System.Convert]::ToBase64String($imageBytes)
+
+        # Set the picture property of the security group
+        Set-AzADGroup -ObjectId $group.Id -ThumbnailPhoto $imageBase64
+
+        # Display success message
+        Write-Host "The picture of the security group has been updated."
+    }
+    else {
+        Write-Host "The specified image file does not exist."
+    }
+}
+else {
+    Write-Host "Security group '$groupName' not found."
+}
